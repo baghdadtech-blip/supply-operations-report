@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تقرير التوريد والعمليات</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+
+  :root {
+    --navy:      #1b2a4a;
+    --navy2:     #243362;
+    --gold:      #c8a84b;
+    --gold-lt:   #f0d98a;
+    --bg:        #eef1f7;
+    --white:     #ffffff;
+    --border:    #dde2ed;
+    --soft:      #6b7a99;
+    --green:     #1e7e4e;
+    --green-bg:  #e6f4ed;
+    --amber:     #b45309;
+    --amber-bg:  #fef3c7;
+    --red:       #b91c1c;
+    --red-bg:    #fee2e2;
+    --r:         10px;
+    --sh:        0 2px 14px rgba(27,42,74,.10);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--bg);
+    color: var(--navy);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 100%);
+    padding: 18px 20px 14px;
+  }
+  .hdr-top { display: flex; align-items: center; gap: 12px; }
+  .hdr-icon {
+    width: 44px; height: 44px;
+    background: var(--gold);
+    border-radius: 10px;
+    display: grid; place-items: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .hdr-title { color: #fff; font-size: 19px; font-weight: 900; line-height: 1.2; }
+  .hdr-sub   { color: var(--gold-lt); font-size: 12px; font-weight: 600; margin-top: 2px; }
+  .hdr-meta  {
+    display: flex; gap: 14px; margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .hdr-meta .mf { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 130px; }
+  .hdr-meta label { color: var(--gold-lt); font-size: 11px; font-weight: 700; letter-spacing: .5px; }
+  .hdr-meta input {
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px; font-weight: 700;
+    background: rgba(255,255,255,.1);
+    border: 1.5px solid rgba(255,255,255,.2);
+    border-radius: 7px;
+    color: #fff;
+    padding: 7px 10px;
+    width: 100%;
+  }
+  .hdr-meta input::placeholder { color: rgba(255,255,255,.4); }
+  .hdr-meta input:focus { outline: none; border-color: var(--gold); background: rgba(255,255,255,.15); }
+  .hdr-meta input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+  .hdr-meta select {
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px; font-weight: 700;
+    background: rgba(255,255,255,.1);
+    border: 1.5px solid rgba(255,255,255,.2);
+    border-radius: 7px;
+    color: #fff;
+    padding: 7px 10px;
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+  }
+  .hdr-meta select option { background: var(--navy); color: #fff; }
+  .hdr-meta select:focus { outline: none; border-color: var(--gold); }
+  .proj-row { display: flex; gap: 6px; align-items: flex-end; }
+  .proj-row select { flex: 1; }
+  .btn-proj-add {
+    background: var(--gold); color: var(--navy);
+    border: none; border-radius: 7px;
+    padding: 8px 12px; cursor: pointer;
+    font-size: 18px; line-height: 1; flex-shrink: 0;
+    font-weight: 900;
+  }
+
+  /* ── PROJECT MODAL ── */
+  .modal-bg {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.5); z-index: 500;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 14px;
+    padding: 22px; width: 100%; max-width: 400px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.3);
+  }
+  .modal h3 { font-size: 17px; font-weight: 900; color: var(--navy); margin-bottom: 16px; }
+  .modal input {
+    font-family: 'Cairo', sans-serif; font-size: 14px;
+    padding: 10px 12px; border: 1.5px solid var(--border);
+    border-radius: 8px; width: 100%; color: var(--navy);
+    direction: rtl; margin-bottom: 10px;
+  }
+  .modal input:focus { outline: none; border-color: var(--gold); }
+  .modal-btns { display: flex; gap: 8px; margin-top: 4px; }
+  .modal-btns button {
+    flex: 1; padding: 10px; border: none; border-radius: 8px;
+    font-family: 'Cairo', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+  .modal-btns .btn-confirm { background: var(--navy); color: #fff; }
+  .modal-btns .btn-cancel  { background: var(--bg);   color: var(--navy); }
+
+  .proj-list-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px;
+    margin-bottom: 7px; background: var(--bg);
+  }
+  .proj-list-item span { font-size: 14px; font-weight: 600; }
+  .proj-list-item button {
+    background: var(--red-bg); color: var(--red);
+    border: none; border-radius: 6px; padding: 4px 10px;
+    font-family: 'Cairo', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+
+  /* ── BODY ── */
+  .page { max-width: 680px; margin: 0 auto; padding: 18px 14px 60px; }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--white);
+    border-radius: var(--r);
+    box-shadow: var(--sh);
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .card-hdr {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    background: var(--navy);
+  }
+  .card-hdr .ico { font-size: 18px; }
+  .card-hdr h2 { color: #fff; font-size: 15px; font-weight: 800; }
+  .card-hdr .badge {
+    margin-right: auto;
+    background: var(--gold);
+    color: var(--navy);
+    font-size: 12px; font-weight: 900;
+    padding: 2px 10px; border-radius: 20px;
+  }
+  .card-body { padding: 16px; }
+
+  /* ── TASKS TABLE ── */
+  .tasks-wrap { overflow-x: auto; }
+  table.tasks {
+    width: 100%; border-collapse: collapse;
+    min-width: 480px;
+  }
+  table.tasks thead th {
+    background: var(--navy);
+    color: #fff;
+    padding: 9px 11px;
+    font-size: 12px; font-weight: 700;
+    text-align: right;
+    white-space: nowrap;
+  }
+  table.tasks tbody td {
+    padding: 7px 8px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  table.tasks tbody tr:last-child td { border-bottom: none; }
+  table.tasks tbody tr:nth-child(even) td { background: var(--bg); }
+
+  table.tasks input[type="text"],
+  table.tasks input[type="time"],
+  table.tasks select {
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    padding: 6px 9px;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    width: 100%;
+    background: #fff;
+    color: var(--navy);
+    direction: rtl;
+  }
+  table.tasks input:focus,
+  table.tasks select:focus { outline: none; border-color: var(--gold); }
+
+  .status-sel { font-weight: 700; }
+
+  .btn-del {
+    background: var(--red-bg); color: var(--red);
+    border: none; border-radius: 6px;
+    padding: 5px 11px; cursor: pointer;
+    font-size: 15px; line-height: 1;
+    font-family: 'Cairo', sans-serif;
+    font-weight: 700;
+  }
+
+  .btn-add {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 10px;
+    padding: 8px 16px;
+    background: var(--navy); color: #fff;
+    border: none; border-radius: 8px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: opacity .15s;
+  }
+  .btn-add:hover { opacity: .85; }
+
+  /* ── STATUS CHIPS (read-only display) ── */
+  .chip { display: inline-block; padding: 3px 11px; border-radius: 20px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+  .chip-done   { background: var(--green-bg); color: var(--green); }
+  .chip-part   { background: var(--amber-bg); color: var(--amber); }
+  .chip-no     { background: var(--red-bg);   color: var(--red);   }
+
+  /* ── RECS & NOTES ── */
+  .rec-list { list-style: none; }
+  .rec-item {
+    display: flex; gap: 10px; align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .rec-item .rec-num {
+    width: 26px; height: 26px; flex-shrink: 0;
+    background: var(--gold); color: var(--navy);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: 900; margin-top: 3px;
+  }
+  .rec-item .rec-inputs { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .rec-item input[type="text"] {
+    font-family: 'Cairo', sans-serif;
+    font-size: 14px; padding: 9px 12px;
+    border: 1.5px solid var(--border); border-radius: 8px;
+    width: 100%; color: var(--navy);
+    direction: rtl;
+  }
+  .rec-item input:focus { outline: none; border-color: var(--gold); }
+  .rec-priority {
+    display: flex; gap: 6px;
+  }
+  .pri-btn {
+    padding: 4px 12px; border-radius: 20px; border: 1.5px solid var(--border);
+    font-family: 'Cairo', sans-serif; font-size: 12px; font-weight: 700;
+    cursor: pointer; background: #fff; color: var(--soft);
+    transition: all .15s;
+  }
+  .pri-btn.sel-urgent { background: var(--red-bg);   border-color: var(--red);   color: var(--red);   }
+  .pri-btn.sel-normal { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+  .pri-btn.sel-info   { background: var(--amber-bg); border-color: var(--amber); color: var(--amber); }
+
+  .notes-area {
+    font-family: 'Cairo', sans-serif;
+    font-size: 14px; line-height: 1.8;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border); border-radius: 8px;
+    width: 100%; min-height: 110px;
+    resize: vertical; color: var(--navy);
+    direction: rtl; background: var(--bg);
+  }
+  .notes-area:focus { outline: none; border-color: var(--gold); background: #fff; }
+
+  /* ── SUMMARY BAR ── */
+  .summary-bar {
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 10px;
+    margin-bottom: 14px;
+  }
+  .sbox {
+    background: var(--white); border-radius: var(--r);
+    box-shadow: var(--sh); padding: 12px 10px; text-align: center;
+    border-top: 3px solid var(--navy);
+  }
+  .sbox.g { border-top-color: var(--green); }
+  .sbox.a { border-top-color: var(--amber); }
+  .sbox.r { border-top-color: var(--red);   }
+  .sbox .n { font-size: 28px; font-weight: 900; line-height: 1; color: var(--navy); }
+  .sbox.g .n { color: var(--green); }
+  .sbox.a .n { color: var(--amber); }
+  .sbox.r .n { color: var(--red);   }
+  .sbox .l { font-size: 11px; font-weight: 700; color: var(--soft); margin-top: 3px; }
+
+  /* ── SAVE / PRINT ── */
+  .actions { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+  .btn-save {
+    width: 100%; padding: 15px;
+    background: linear-gradient(135deg, var(--navy), var(--navy2));
+    color: #fff; border: none; border-radius: var(--r);
+    font-family: 'Cairo', sans-serif; font-size: 16px; font-weight: 900;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: opacity .15s;
+  }
+  .btn-save:hover { opacity: .9; }
+  .btn-print {
+    width: 100%; padding: 11px;
+    background: #fff; color: var(--navy);
+    border: 2px solid var(--navy); border-radius: var(--r);
+    font-family: 'Cairo', sans-serif; font-size: 14px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background .15s;
+  }
+  .btn-print:hover { background: var(--bg); }
+  .btn-new {
+    width: 100%; padding: 11px;
+    background: var(--gold); color: var(--navy);
+    border: none; border-radius: var(--r);
+    font-family: 'Cairo', sans-serif; font-size: 14px; font-weight: 900;
+    cursor: pointer; transition: opacity .15s;
+  }
+  .btn-new:hover { opacity: .88; }
+
+  /* ── HISTORY ── */
+  .hist-item {
+    border: 1.5px solid var(--border); border-radius: var(--r);
+    margin-bottom: 10px; overflow: hidden;
+  }
+  .hist-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 11px 14px; cursor: pointer; background: var(--bg);
+  }
+  .hist-hdr:hover { background: #e4e8f2; }
+  .hist-date { font-weight: 900; font-size: 14px; }
+  .hist-proj { font-size: 12px; color: var(--soft); }
+  .hist-body { padding: 14px; display: none; font-size: 13px; line-height: 2; }
+  .hist-body.open { display: block; }
+  .hist-section { font-weight: 800; color: var(--navy); margin-top: 8px; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--navy); color: #fff;
+    padding: 12px 28px; border-radius: 30px;
+    font-size: 14px; font-weight: 700;
+    box-shadow: 0 6px 24px rgba(0,0,0,.25);
+    z-index: 999; transition: transform .3s;
+    white-space: nowrap;
+  }
+  .toast.up { transform: translateX(-50%) translateY(0); }
+  .toast.ok  { background: var(--green); }
+  .toast.err { background: var(--red);   }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex; background: #fff;
+    border-bottom: 2px solid var(--border);
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 12px 18px; border: none; background: none;
+    font-family: 'Cairo', sans-serif; font-size: 13px; font-weight: 700;
+    color: var(--soft); cursor: pointer; white-space: nowrap;
+    border-bottom: 3px solid transparent; margin-bottom: -2px;
+    transition: all .15s;
+  }
+  .tab.on { color: var(--navy); border-bottom-color: var(--gold); }
+
+  .panel { display: none; }
+  .panel.on { display: block; }
+
+  /* ── PRINT ── */
+  @media print {
+    header, .tabs, .actions, .btn-add, .btn-del, .toast { display: none !important; }
+    body { background: #fff; }
+    .card { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
+    table.tasks input, table.tasks select,
+    .rec-item input, .notes-area { border: none !important; background: transparent !important; }
+    .pri-btn { display: none; }
+  }
+
+  @media (max-width: 480px) {
+    .hdr-title { font-size: 16px; }
+    .summary-bar { grid-template-columns: 1fr 1fr 1fr; }
+    .sbox .n { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="hdr-top">
+    <div class="hdr-icon">📋</div>
+    <div>
+      <div class="hdr-title">تقرير التوريد والعمليات</div>
+      <div class="hdr-sub">أمين بناء للمقاولات</div>
+    </div>
+  </div>
+  <div class="hdr-meta">
+    <div class="mf">
+      <label>التاريخ</label>
+      <input type="date" id="hDate">
+    </div>
+    <div class="mf">
+      <label>المشروع</label>
+      <div class="proj-row">
+        <select id="hProject"><option value="">-- اختر المشروع --</option></select>
+        <button class="btn-proj-add" onclick="openProjModal()" title="إدارة المشاريع">⚙️</button>
+      </div>
+    </div>
+    <div class="mf">
+      <label>اسم الموظف</label>
+      <input type="text" id="hOfficer" placeholder="المسؤول">
+    </div>
+  </div>
+</header>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab on" onclick="goTab('entry',this)">✏️ إدخال التقرير</button>
+  <button class="tab"    onclick="goTab('history',this)">📁 السجل</button>
+</div>
+
+<!-- ENTRY PANEL -->
+<div id="panel-entry" class="panel on">
+<div class="page">
+
+  <!-- SUMMARY -->
+  <div class="summary-bar">
+    <div class="sbox g"><div class="n" id="sDone">0</div><div class="l">منجزة</div></div>
+    <div class="sbox a"><div class="n" id="sPart">0</div><div class="l">جزئية</div></div>
+    <div class="sbox r"><div class="n" id="sNot">0</div><div class="l">لم تنجز</div></div>
+  </div>
+
+  <!-- TASKS -->
+  <div class="card">
+    <div class="card-hdr">
+      <span class="ico">✅</span>
+      <h2>المهام اليومية المنجزة</h2>
+      <span class="badge" id="taskCount">0</span>
+    </div>
+    <div class="card-body">
+      <div class="tasks-wrap">
+        <table class="tasks">
+          <thead>
+            <tr>
+              <th style="width:36%">المهمة</th>
+              <th style="width:22%">التفاصيل</th>
+              <th style="width:17%">الوقت</th>
+              <th style="width:16%">الحالة</th>
+              <th style="width:9%"></th>
+            </tr>
+          </thead>
+          <tbody id="taskBody"></tbody>
+        </table>
+      </div>
+      <button class="btn-add" onclick="addTask()">+ إضافة مهمة</button>
+    </div>
+  </div>
+
+  <!-- RECS -->
+  <div class="card">
+    <div class="card-hdr">
+      <span class="ico">📅</span>
+      <h2>توصيات يوم الغد</h2>
+      <span class="badge" id="recCount">0</span>
+    </div>
+    <div class="card-body">
+      <ul class="rec-list" id="recList"></ul>
+      <button class="btn-add" onclick="addRec()">+ إضافة توصية</button>
+    </div>
+  </div>
+
+  <!-- NOTES -->
+  <div class="card">
+    <div class="card-hdr">
+      <span class="ico">📝</span>
+      <h2>الملاحظات</h2>
+    </div>
+    <div class="card-body">
+      <textarea class="notes-area" id="notes" placeholder="أي ملاحظات عامة، تنبيهات، أو معلومات مهمة..."></textarea>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="actions">
+    <button class="btn-save" onclick="saveReport()">💾 حفظ التقرير</button>
+    <button class="btn-print" onclick="window.print()">🖨️ طباعة / PDF</button>
+    <button class="btn-new" onclick="newReport()">🔄 تقرير جديد</button>
+  </div>
+
+</div>
+</div>
+
+<!-- HISTORY PANEL -->
+<div id="panel-history" class="panel">
+<div class="page">
+  <div class="card">
+    <div class="card-hdr">
+      <span class="ico">📁</span>
+      <h2>التقارير المحفوظة</h2>
+    </div>
+    <div class="card-body" id="histBody">
+      <p style="color:var(--soft);text-align:center;padding:24px">لا توجد تقارير بعد</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PROJECT MODAL -->
+<div class="modal-bg" id="projModal">
+  <div class="modal">
+    <h3>🏗️ إدارة المشاريع</h3>
+    <div id="projListUI"></div>
+    <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
+      <p style="font-size:13px;font-weight:700;color:var(--soft);margin-bottom:8px">إضافة مشروع جديد:</p>
+      <input type="text" id="newProjName" placeholder="اسم المشروع...">
+      <input type="text" id="newProjLoc"  placeholder="الموقع (اختياري)">
+      <div class="modal-btns">
+        <button class="btn-confirm" onclick="addProject()">+ إضافة</button>
+        <button class="btn-cancel"  onclick="closeProjModal()">إغلاق</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── INIT ──
+document.getElementById('hDate').value = today();
+function today() { return new Date().toISOString().split('T')[0]; }
+
+// ── TABS ──
+function goTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('on'));
+  document.getElementById('panel-' + name).classList.add('on');
+  btn.classList.add('on');
+  if (name === 'history') renderHistory();
+}
+
+// ── TOAST ──
+function toast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast up ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+// ── TASKS ──
+let taskId = 0;
+function addTask(d={}) {
+  taskId++;
+  const id = 'tk' + taskId;
+  const tr = document.createElement('tr');
+  tr.id = id;
+  tr.innerHTML = `
+    <td><input type="text" value="${d.task||''}" placeholder="وصف المهمة" oninput="updateSummary()"></td>
+    <td><input type="text" value="${d.detail||''}" placeholder="تفاصيل..."></td>
+    <td><input type="time" value="${d.time||''}"></td>
+    <td>
+      <select class="status-sel" onchange="updateSummary()">
+        <option value="منجزة"   ${d.status=='منجزة'  ||!d.status?'selected':''}>✅ منجزة</option>
+        <option value="جزئية"   ${d.status=='جزئية'  ?'selected':''}>🔶 جزئية</option>
+        <option value="لم تنجز" ${d.status=='لم تنجز'?'selected':''}>❌ لم تنجز</option>
+      </select>
+    </td>
+    <td><button class="btn-del" onclick="delRow('${id}')">✕</button></td>
+  `;
+  document.getElementById('taskBody').appendChild(tr);
+  updateSummary();
+}
+
+function delRow(id) {
+  document.getElementById(id)?.remove();
+  updateSummary();
+}
+
+function updateSummary() {
+  const rows = document.querySelectorAll('#taskBody tr');
+  let done=0, part=0, no=0;
+  rows.forEach(r => {
+    const s = r.querySelector('select')?.value;
+    if (s==='منجزة') done++;
+    else if (s==='جزئية') part++;
+    else if (s==='لم تنجز') no++;
+  });
+  document.getElementById('sDone').textContent = done;
+  document.getElementById('sPart').textContent = part;
+  document.getElementById('sNot').textContent  = no;
+  document.getElementById('taskCount').textContent = rows.length;
+}
+
+// ── RECS ──
+let recId = 0;
+function addRec(d={}) {
+  recId++;
+  const id = 'rc' + recId;
+  const li = document.createElement('li');
+  li.className = 'rec-item';
+  li.id = id;
+  const num = document.querySelectorAll('.rec-item').length + 1;
+  const pri = d.priority || '';
+  li.innerHTML = `
+    <div class="rec-num">${num}</div>
+    <div class="rec-inputs">
+      <input type="text" value="${d.text||''}" placeholder="التوصية أو المطلوب غداً..." oninput="updateRecCount()">
+      <div class="rec-priority">
+        <button type="button" class="pri-btn ${pri==='عاجل'?'sel-urgent':''}"
+          onclick="setPri(this,'عاجل','sel-urgent')">🔴 عاجل</button>
+        <button type="button" class="pri-btn ${pri==='عادي'?'sel-normal':''}"
+          onclick="setPri(this,'عادي','sel-normal')">🟢 عادي</button>
+        <button type="button" class="pri-btn ${pri==='للمعلومية'?'sel-info':''}"
+          onclick="setPri(this,'للمعلومية','sel-info')">🟡 للمعلومية</button>
+        <button type="button" class="btn-del" style="margin-right:auto"
+          onclick="document.getElementById('${id}').remove(); updateRecCount()">✕</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('recList').appendChild(li);
+  updateRecCount();
+}
+
+function setPri(btn, val, cls) {
+  const group = btn.closest('.rec-priority');
+  group.querySelectorAll('.pri-btn').forEach(b => b.classList.remove('sel-urgent','sel-normal','sel-info'));
+  btn.classList.add(cls);
+  btn.dataset.val = val;
+}
+
+function updateRecCount() {
+  document.getElementById('recCount').textContent =
+    document.querySelectorAll('.rec-item').length;
+  // renumber
+  document.querySelectorAll('.rec-num').forEach((el,i) => el.textContent = i+1);
+}
+
+// ── COLLECT ──
+function collectTasks() {
+  return Array.from(document.querySelectorAll('#taskBody tr')).map(r => {
+    const ins = r.querySelectorAll('input');
+    return {
+      task:   ins[0]?.value || '',
+      detail: ins[1]?.value || '',
+      time:   ins[2]?.value || '',
+      status: r.querySelector('select')?.value || ''
+    };
+  }).filter(t => t.task);
+}
+
+function collectRecs() {
+  return Array.from(document.querySelectorAll('.rec-item')).map(li => {
+    const text = li.querySelector('input[type="text"]')?.value || '';
+    const priBtn = li.querySelector('.pri-btn.sel-urgent, .pri-btn.sel-normal, .pri-btn.sel-info');
+    const priority = priBtn ? priBtn.dataset.val || priBtn.textContent.replace(/[^أ-ي ]/g,'').trim() : '';
+    return { text, priority };
+  }).filter(r => r.text);
+}
+
+// ── SHEETS URL ──
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzVZzhpfOa53Tw7QBugQijCRGT9iWJR3tPSsyClAsHftK1JgBWf3O68RLxDrQWnHLyo/exec';
+
+// ── SAVE ──
+async function saveReport() {
+  const date    = document.getElementById('hDate').value;
+  const project = document.getElementById('hProject').value.trim();
+  const officer = document.getElementById('hOfficer').value.trim();
+  if (!date || !project) { toast('أدخل التاريخ واسم المشروع', 'err'); return; }
+
+  const tasks = collectTasks();
+  const recs  = collectRecs();
+  const notes = document.getElementById('notes').value.trim();
+
+  const report = { date, project, officer, tasks, recs, notes, savedAt: new Date().toISOString() };
+
+  let hist = JSON.parse(localStorage.getItem('sopReports') || '[]');
+  const idx = hist.findIndex(r => r.date === date && r.project === project);
+  if (idx >= 0) hist[idx] = report; else hist.unshift(report);
+  if (hist.length > 60) hist = hist.slice(0, 60);
+  localStorage.setItem('sopReports', JSON.stringify(hist));
+
+  const saveBtn = document.querySelector('.btn-save');
+  saveBtn.textContent = '⏳ جاري الإرسال...;
+  saveBtn.disabled = true;
+
+  try {
+    await fetch(SHEETS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date, project, officer, tasks, recs, notes })
+    });
+    toast('✅ تم الحفظ والإرسال لـ Google Sheets', 'ok');
+  } catch(err) {
+    toast('✅ تم الحفظ محلياً (تعذّر الإرسال)', 'ok');
+  }
+
+  saveBtn.textContent = '💾 حفظ التقرير';
+  saveBtn.disabled = false;
+}
+
+// ── HISTORY ──
+function renderHistory() {
+  const hist = JSON.parse(localStorage.getItem('sopReports') || '[]');
+  const box  = document.getElementById('histBody');
+  if (!hist.length) {
+    box.innerHTML = '<p style="color:var(--soft);text-align:center;padding:24px">لا توجد تقارير محفوظة</p>';
+    return;
+  }
+  box.innerHTML = hist.map((r,i) => {
+    const done = r.tasks.filter(t=>t.status==='منجزة').length;
+    const part = r.tasks.filter(t=>t.status==='جزئية').length;
+    const no   = r.tasks.filter(t=>t.status==='لم تنجز').length;
+    return `
+    <div class="hist-item">
+      <div class="hist-hdr" onclick="toggleHist('h${i}')">
+        <div>
+          <div class="hist-date">📅 ${r.date}</div>
+          <div class="hist-proj">${r.project} — ${r.officer||''}</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="chip chip-done">${done} منجزة</span>
+          ${part?`<span class="chip chip-part">${part} جزئية</span>`:''}
+          ${no?`<span class="chip chip-no">${no} لم تنجز</span>`:''}
+          <span style="color:var(--gold);font-size:18px;margin-right:4px">›</span>
+        </div>
+      </div>
+      <div class="hist-body" id="h${i}">
+        <div class="hist-section">المهام:</div>
+        ${r.tasks.map(t=>`
+          <div style="display:flex;gap:8px;align-items:center;margin:4px 0">
+            <span class="chip ${t.status==='منجزة'?'chip-done':t.status==='جزئية'?'chip-part':'chip-no'}">${t.status}</span>
+            <span>${t.task}</span>
+            ${t.time?`<span style="color:var(--soft);font-size:12px">${t.time}</span>`:''}
+            ${t.detail?`<span style="color:var(--soft);font-size:12px">— ${t.detail}</span>`:''}
+          </div>`).join('')}
+        ${r.recs.length ? `
+        <div class="hist-section" style="margin-top:10px">توصيات الغد:</div>
+        ${r.recs.map((rc,j)=>`<div style="margin:3px 0">${j+1}. ${rc.text} ${rc.priority?`<span style="color:var(--soft)">(${rc.priority})</span>`:''}</div>`).join('')}
+        ` : ''}
+        ${r.notes ? `
+        <div class="hist-section" style="margin-top:10px">الملاحظات:</div>
+        <div style="white-space:pre-wrap;color:var(--soft)">${r.notes}</div>
+        ` : ''}
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn-add" style="font-size:12px;padding:6px 12px" onclick="loadReport(${i})">📂 تحميل للتعديل</button>
+          <button class="btn-del" onclick="deleteReport(${i})">حذف</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleHist(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+}
+
+function deleteReport(i) {
+  if (!confirm('حذف هذا التقرير؟')) return;
+  let hist = JSON.parse(localStorage.getItem('sopReports') || '[]');
+  hist.splice(i, 1);
+  localStorage.setItem('sopReports', JSON.stringify(hist));
+  renderHistory();
+  toast('تم الحذف', 'err');
+}
+
+function loadReport(i) {
+  const hist = JSON.parse(localStorage.getItem('sopReports') || '[]');
+  const r = hist[i];
+  if (!r) return;
+  document.getElementById('hDate').value    = r.date;
+  document.getElementById('hProject').value = r.project;
+  document.getElementById('hOfficer').value = r.officer || '';
+  document.getElementById('notes').value    = r.notes   || '';
+  document.getElementById('taskBody').innerHTML = '';
+  document.getElementById('recList').innerHTML  = '';
+  taskId = 0; recId = 0;
+  r.tasks.forEach(t => addTask(t));
+  r.recs.forEach(rc => addRec(rc));
+  goTab('entry', document.querySelector('.tab'));
+  toast('تم تحميل التقرير', 'ok');
+}
+
+// ── NEW REPORT ──
+function newReport() {
+  if (!confirm('مسح بيانات التقرير الحالي وبدء جديد؟')) return;
+  document.getElementById('hDate').value    = today();
+  document.getElementById('hProject').value = '';
+  document.getElementById('hOfficer').value = '';
+  document.getElementById('notes').value    = '';
+  document.getElementById('taskBody').innerHTML = '';
+  document.getElementById('recList').innerHTML  = '';
+  taskId = 0; recId = 0;
+  addTask(); addTask(); addRec();
+  updateSummary(); updateRecCount();
+}
+
+// ── PROJECTS ──
+function getProjects() {
+  return JSON.parse(localStorage.getItem('sopProjects') || '[]');
+}
+function saveProjects(arr) {
+  localStorage.setItem('sopProjects', JSON.stringify(arr));
+}
+function renderProjectSelect() {
+  const sel = document.getElementById('hProject');
+  const cur = sel.value;
+  const projects = getProjects();
+  sel.innerHTML = '<option value="">-- اختر المشروع --</option>' +
+    projects.map(p => `<option value="${p.name}" ${cur===p.name?'selected':''}>${p.name}${p.loc?' — '+p.loc:''}</option>`).join('');
+  if (cur) sel.value = cur;
+}
+function openProjModal() {
+  renderProjList();
+  document.getElementById('projModal').classList.add('open');
+}
+function closeProjModal() {
+  document.getElementById('projModal').classList.remove('open');
+  renderProjectSelect();
+}
+function renderProjList() {
+  const projects = getProjects();
+  const box = document.getElementById('projListUI');
+  if (!projects.length) {
+    box.innerHTML = '<p style="color:var(--soft);font-size:13px;text-align:center;padding:10px">لا توجد مشاريع بعد</p>';
+    return;
+  }
+  box.innerHTML = projects.map((p,i) => `
+    <div class="proj-list-item">
+      <span>🏗️ ${p.name}${p.loc?' <small style="color:var(--soft)">— '+p.loc+'</small>':''}</span>
+      <button onclick="deleteProject(${i})">حذف</button>
+    </div>`).join('');
+}
+function addProject() {
+  const name = document.getElementById('newProjName').value.trim();
+  const loc  = document.getElementById('newProjLoc').value.trim();
+  if (!name) { toast('أدخل اسم المشروع', 'err'); return; }
+  const projects = getProjects();
+  if (projects.find(p => p.name === name)) { toast('المشروع موجود مسبقاً', 'err'); return; }
+  projects.push({ name, loc });
+  saveProjects(projects);
+  document.getElementById('newProjName').value = '';
+  document.getElementById('newProjLoc').value  = '';
+  renderProjList();
+  toast('✅ تم إضافة المشروع', 'ok');
+}
+function deleteProject(i) {
+  if (!confirm('حذف هذا المشروع؟')) return;
+  const projects = getProjects();
+  projects.splice(i, 1);
+  saveProjects(projects);
+  renderProjList();
+}
+
+// ── INIT ──
+renderProjectSelect();
+addTask(); addTask(); addTask();
+addRec(); addRec();
+</script>
+</body>
+</html>
